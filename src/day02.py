@@ -42,8 +42,8 @@ if __name__ == "__main__":
     input_path = utils.get_input_path(__file__)
     pt1_test_path = utils.get_test_path(__file__, 1)
     pt1_test_answer = get_answer(pt1_test_path, part=1)
-    assert pt1_test_answer ==  142, (
-        f"got calibration sum of {pt1_test_answer}, should be 142"
+    assert pt1_test_answer ==  0, (
+        f"got calibration sum of {pt1_test_answer}, should be "
     )
     pt1_start_time = time.time()
     part1_answer = get_answer(input_path, part=1)
@@ -53,8 +53,8 @@ if __name__ == "__main__":
 
     pt2_test_path = utils.get_test_path(__file__, 2)
     pt2_test_answer = get_answer(pt2_test_path, part=2)
-    assert pt2_test_answer == 281, (
-        f"got calibration sum of {pt2_test_answer}, should be 281"
+    assert pt2_test_answer == , (
+        f"got calibration sum of {pt2_test_answer}, should be "
     )
     pt2_start_time = time.time()
     part2_answer = get_answer(input_path, part=2)
