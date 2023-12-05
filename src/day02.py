@@ -1,63 +1,46 @@
 import utils
 import time
-from multiprocessing import Pool
-from math import inf
+import numpy as np
+import itertools
+from collections.abc import Iterator
+from collections import defaultdict
 
-def get_pt1_calibration_value(line:str) -> int:
-    first_digit = int(next(c for c in line if c.isdigit()))
-    last_digit = int(next(c for c in line[::-1] if c.isdigit()))
-    return first_digit*10 + last_digit
+input_path = utils.get_input_path(__file__)
 
-def get_pt2_calibration_value(line:str) -> int:
-    digit_words = ['zero','one','two','three','four','five','six','seven','eight','nine']
-    digit_chars = ['0','1','2','3','4','5','6','7','8','9']
-    first_digit = last_digit = None
-    first_idx = last_idx = inf
-    for i, s in enumerate(digit_words + digit_chars):
-        if s in line:
-            if line.index(s) < first_idx:
-                first_idx = line.index(s)
-                first_digit = i % 10
-            if line[::-1].index(s[::-1]) < last_idx:
-                last_idx = line[::-1].index(s[::-1])
-                last_digit = i % 10
-    return first_digit*10 + last_digit
+digit_chars = ['0','1','2','3','4','5','6','7','8','9']
 
-def parallel_apply(func, input_path:str) -> int:
-    with open(input_path) as f:
-        lines = [line for line in f if line.strip()]
-    with Pool() as pool:
-        results = pool.map(func, lines)
-    return sum(results)
 
-def get_answer(input_path: str, part: int) -> int:
+def get_matrix(path:str) -> int:
+    with open(path) as f:
+        mtrx = np.array([list(line.strip()) for line in f if line.strip()])
+    return mtrx
+
+
+def get_answer(path, part:int):
+    mtrx = get_matrix(path)
+    parts = get_parts(mtrx)
     if part == 1:
-        return parallel_apply(get_pt1_calibration_value, input_path)
+        return sum([num for (num, _) in parts])
     elif part == 2:
-        return parallel_apply(get_pt2_calibration_value, input_path)
+        gear_ratios = get_gear_ratios(parts)
+        return sum(gear_ratios)
     else:
         raise Exception('not part 1 or 2')
 
-if __name__ == "__main__":
-    input_path = utils.get_input_path(__file__)
-    pt1_test_path = utils.get_test_path(__file__, 1)
-    pt1_test_answer = get_answer(pt1_test_path, part=1)
-    assert pt1_test_answer ==  0, (
-        f"got calibration sum of {pt1_test_answer}, should be "
-    )
-    pt1_start_time = time.time()
-    part1_answer = get_answer(input_path, part=1)
-    pt1_end_time = time.time()
-    pt1_duration = 1000*(pt1_end_time - pt1_start_time)
-    print(f"Part 1 Answer: {part1_answer}, in {pt1_duration} ms")
 
-    pt2_test_path = utils.get_test_path(__file__, 2)
-    pt2_test_answer = get_answer(pt2_test_path, part=2)
-    assert pt2_test_answer == , (
-        f"got calibration sum of {pt2_test_answer}, should be "
+def run(part:int, test_expected):
+    test_path = utils.get_test_path(__file__, part)
+    test_answer = get_answer(test_path, part=part)
+    assert test_answer ==  test_expected, (
+        f"got calibration sum of {test_answer}, should be {test_expected}"
     )
-    pt2_start_time = time.time()
-    part2_answer = get_answer(input_path, part=2)
-    pt2_end_time = time.time()
-    pt2_duration = 1000*(pt2_end_time - pt2_start_time)
-    print(f"Part 2 Answer: {part2_answer}, in {pt2_duration} ms")
+    start_time = time.time()
+    answer = get_answer(input_path, part=part)
+    end_time = time.time()
+    duration = 1000*(end_time - start_time)
+    print(f"Part {part} Answer: {answer}, in {duration} ms")
+
+
+if __name__ == "__main__":
+    run(part=1,test_expected=4361)
+    run(part=2,test_expected=467835)

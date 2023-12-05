@@ -1,73 +1,89 @@
 import utils
 import time
-from multiprocessing import Pool
 import numpy as np
 import itertools
+from collections.abc import Iterator
+from collections import defaultdict
+
+input_path = utils.get_input_path(__file__)
 
 digit_chars = ['0','1','2','3','4','5','6','7','8','9']
 
-def has_symbol_neighbor(mtrx, i, j):
+
+def get_neighbors(mtrx, i, j) -> dict:
+    nhbrs = {}
     for (offset_y, offset_x) in itertools.product([-1,0,1],repeat=2):
         if i+offset_y > mtrx.shape[0]-1 or j+offset_x > mtrx.shape[0]-1 or \
            i+offset_y < 0 or j+offset_x<0:
             continue
         if mtrx[i+offset_y,j+offset_x] not in digit_chars + ['.']:
-            return True
-    return False
+            nhbrs[(i+offset_y,j+offset_x)] = mtrx[i+offset_y,j+offset_x]
+    return nhbrs
 
-def get_part_numbers(mtrx) -> int:
-    part_nums = []
+
+def get_parts(mtrx) -> int:
+    parts = []
     for i, vec in enumerate(mtrx):
-        sym_adj = False
         num = ''
+        nhbrs = {}
+        sym_adj = False
         for j, char in enumerate(vec):
             if char in digit_chars:
                 num += char
-                sym_adj = sym_adj or has_symbol_neighbor(mtrx, i, j)
+                nhbrs |= get_neighbors(mtrx, i, j)
+                sym_adj = sym_adj or bool(nhbrs)
                 if j == len(vec) - 1 and sym_adj:
-                    part_nums.append(int(num))
+                    parts.append((int(num), nhbrs))
             else:
                 if sym_adj:
-                    part_nums.append(int(num))
+                    parts.append((int(num), nhbrs))
                 num = ''
+                nhbrs = {}
                 sym_adj = False
-    return part_nums
+    return parts
 
-def get_matrix(input_path:str) -> int:
-    with open(input_path) as f:
+
+def get_gear_ratios(parts) -> list[tuple[int,int]]:
+    starred_nums = defaultdict(list)
+    for num,nhbrs in parts:
+        for coords,sym in nhbrs.items():
+            if sym == '*':
+                starred_nums[coords].append(num)
+    gears = [v for k,v in starred_nums.items() if len(v) == 2]
+    return [a*b for a,b in gears]
+
+
+def get_matrix(path:str) -> int:
+    with open(path) as f:
         mtrx = np.array([list(line.strip()) for line in f if line.strip()])
     return mtrx
 
-def get_answer(input_path: str, part: int) -> int:
-    mtrx = get_matrix(input_path)
+
+def get_answer(path, part:int):
+    mtrx = get_matrix(path)
+    parts = get_parts(mtrx)
     if part == 1:
-        part_nums = get_part_numbers(mtrx)
-        return sum(part_nums)
+        return sum([num for (num, _) in parts])
     elif part == 2:
-        pass
+        gear_ratios = get_gear_ratios(parts)
+        return sum(gear_ratios)
     else:
         raise Exception('not part 1 or 2')
 
-if __name__ == "__main__":
-    input_path = utils.get_input_path(__file__)
-    pt1_test_path = utils.get_test_path(__file__, 1)
-    pt1_test_answer = get_answer(pt1_test_path, part=1)
-    assert pt1_test_answer ==  4361, (
-        f"got calibration sum of {pt1_test_answer}, should be 4361"
-    )
-    pt1_start_time = time.time()
-    part1_answer = get_answer(input_path, part=1)
-    pt1_end_time = time.time()
-    pt1_duration = 1000*(pt1_end_time - pt1_start_time)
-    print(f"Part 1 Answer: {part1_answer}, in {pt1_duration} ms")
 
-    # pt2_test_path = utils.get_test_path(__file__, 2)
-    # pt2_test_answer = get_answer(pt2_test_path, part=2)
-    # assert pt2_test_answer == 281, (
-    #     f"got calibration sum of {pt2_test_answer}, should be 281"
-    # )
-    # pt2_start_time = time.time()
-    # part2_answer = get_answer(input_path, part=2)
-    # pt2_end_time = time.time()
-    # pt2_duration = 1000*(pt2_end_time - pt2_start_time)
-    # print(f"Part 2 Answer: {part2_answer}, in {pt2_duration} ms")
+def run(part:int, test_expected):
+    test_path = utils.get_test_path(__file__, part)
+    test_answer = get_answer(test_path, part=part)
+    assert test_answer ==  test_expected, (
+        f"got calibration sum of {test_answer}, should be {test_expected}"
+    )
+    start_time = time.time()
+    answer = get_answer(input_path, part=part)
+    end_time = time.time()
+    duration = 1000*(end_time - start_time)
+    print(f"Part {part} Answer: {answer}, in {duration} ms")
+
+
+if __name__ == "__main__":
+    run(part=1,test_expected=4361)
+    run(part=2,test_expected=467835)
