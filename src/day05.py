@@ -17,20 +17,23 @@ def traverse(num:int, source:str, almanac) -> int:
             return traverse(dest_num, dest, almanac)
 
 
-def get_lowest_loc(almanac) -> int:
-    locations = []
-    for seed in almanac.get('seeds'):
-        locations.append(traverse(int(seed), 'seed',almanac))
-    return min(locations)
+def get_lowest_loc(almanac, part:int) -> int:
+    if part == 1:
+        locations = []
+        for seed in almanac.get('seeds'):
+            locations.append(traverse(seed, 'seed', almanac))
+        return min(locations)
+    elif part == 2:
+        pass
 
 
-def get_almanac(path:str) -> int:
+def get_almanac(path:str, part:int) -> int:
     source = dest = mp = None
     almanac = {}
     with open(path) as f:
         for line in f:
             if line.strip().startswith('seeds:'):
-                seeds = line.strip().split(': ')[-1].split(' ')
+                seeds = [int(seed) for seed in line.strip().split(': ')[-1].split(' ')]
                 almanac['seeds'] = seeds
             elif not line.strip():
                 if source:
@@ -50,13 +53,8 @@ def get_almanac(path:str) -> int:
 
 
 def get_answer(path, part:int):
-    almanac = get_almanac(path)
-    if part == 1:
-        return get_lowest_loc(almanac)
-    elif part == 2:
-        pass
-    else:
-        raise Exception('not part 1 or 2')
+    almanac = get_almanac(path, part)
+    return get_lowest_loc(almanac)
 
 
 def run(part:int, test_expected):
@@ -74,4 +72,4 @@ def run(part:int, test_expected):
 
 if __name__ == "__main__":
     run(part=1,test_expected=35)
-    # run(part=2,test_expected=467835)
+    run(part=2,test_expected=46)
