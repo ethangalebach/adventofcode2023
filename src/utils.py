@@ -1,4 +1,5 @@
 import os
+from multiprocessing import Pool
 
 def get_input_path(file):
     filename = os.path.basename(file)
@@ -11,3 +12,8 @@ def get_test_path(file, part):
     filename = filename.removesuffix('.py') + f'_pt{part}.txt'
     file_dir = os.path.dirname(os.path.dirname(file))
     return os.path.join(file_dir, f'tests/test_{filename}')
+
+def parallel_apply(func, lines) -> list:
+    with Pool() as pool:
+        results = pool.map(func, lines)
+    return results
