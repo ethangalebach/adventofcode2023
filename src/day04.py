@@ -1,36 +1,44 @@
 import utils
 import time
 import numpy as np
+from multiprocessing import Pool
 
 input_path = utils.get_input_path(__file__)
 
-def get_races(path:str, part:int) -> list:
-    races = []
-    with open(path) as f:
-        for line in f:
-            if line.strip():
-                digits = line.strip().split(':')[1].split()
-                if part == 1:
-                    races.append(list(map(int, digits)))
-                if part == 2:
-                    digits = "".join(digits)
-                    races.append(int(digits))
-    if part == 1:
-        return list(zip(races[0], races[1]))
-    if part == 2:
-        return [races]
+def get_num_scratchcards(matches):
+    num_scratchcards = np.array([1]*len(matches))
+    for i, match in enumerate(matches):
+        num_scratchcards[i+1:match+i+1] += num_scratchcards[i]
+    return sum(num_scratchcards)
+
+
+def get_num_matches(card) -> int:
+    winners, mine = card
+    return len(winners & mine)
+
+
+def get_card(line:str) -> tuple:
+    winners, mine = line.strip().split(': ')[1].split(' | ')
+    return set(winners.split()), set(mine.split())
+
+
+def parallel_apply(func, input_path:str) -> int:
+    with open(input_path) as f:
+        lines = [line for line in f if line.strip()]
+    with Pool() as pool:
+        results = pool.map(func, lines)
+    return results
 
 
 def get_answer(path, part:int):
-    races = get_races(path, part)
-    win_arr = np.array([])
-    for time,record in races:
-        wins = 0
-        for charge in range(time):
-            if charge*(time-charge) > record:
-                wins += 1
-        win_arr = np.append(win_arr, wins)
-    return np.prod(win_arr)
+    cards = parallel_apply(get_card, path)
+    with Pool() as pool:
+        matches = pool.map(get_num_matches, cards)
+    if part == 1:
+        points = [2**(num-1) if num > 0 else 0 for num in matches]
+        return sum(points)
+    if part == 2:
+        return get_num_scratchcards(matches)
 
 
 def run(part:int, test_expected):
@@ -47,5 +55,5 @@ def run(part:int, test_expected):
 
 
 if __name__ == "__main__":
-    run(part=1,test_expected=288)
-    run(part=2,test_expected=71503)
+    run(part=1,test_expected=13)
+    run(part=2,test_expected=30)
