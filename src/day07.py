@@ -74,7 +74,8 @@ def get_winning(bid, rank):
 
 
 def get_answer(path, part:int):
-    hand_type_bids = parallel_apply(partial(get_hand_type_bid,part=part), path)
+    hand_type_bids = parallel_apply(
+        partial(get_hand_type_bid, part=part), path)
     num_hands = len(hand_type_bids)
     sorted_hand_type_bids = sorted(
         hand_type_bids,
@@ -83,7 +84,8 @@ def get_answer(path, part:int):
     with Pool() as pool:
         results = pool.starmap(
             get_winning,
-            ((htb[2], num_hands-i) for i, htb in enumerate(sorted_hand_type_bids)))
+            ((htb[2], num_hands-i) \
+             for i, htb in enumerate(sorted_hand_type_bids)))
     return sum(results)
 
 
