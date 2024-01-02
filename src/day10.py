@@ -1,8 +1,10 @@
 import utils
 import time
 import numpy as np
-from pprint import pprint
 import networkx as nx
+from shapely import Polygon, Point
+import geopandas as gpd
+import itertools
 
 input_path = utils.get_input_path(__file__)
 
@@ -101,11 +103,22 @@ def get_grid(path):
                 line_num += 1
     return grid,start
 
+
 def get_answer(path, part:int):
     grid,start = get_grid(path)
     pipe = get_pipe(grid,start)
     if part == 1:
         return max(data.get('step') for node, data in pipe.nodes(data=True))
+    if part == 2:
+        points = list(itertools.product(*list(range(d) for d in grid.shape)))
+        ordered_nodes = list(pipe.nodes)[::2] + list(pipe.nodes)[::-2]
+        polygon = Polygon(ordered_nodes)
+        gdf_points = gpd.GeoDataFrame(geometry=[Point(p) for p in points])
+        gdf_polygon = gpd.GeoDataFrame(geometry=[polygon])
+        #rtrees ftw
+        points_in_polygon = gpd.sjoin(
+             gdf_points, gdf_polygon, how="inner", predicate='within')
+        return len(points_in_polygon)
 
 
 def run(part:int, test_expected):
@@ -123,4 +136,4 @@ def run(part:int, test_expected):
 
 if __name__ == "__main__":
     run(part=1,test_expected=8)
-    # run(part=2,test_expected=2)
+    run(part=2,test_expected=10)
